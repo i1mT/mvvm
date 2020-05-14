@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo -- mvvm</title>
+  <link rel="stylesheet" href="./iconoo.min.css">
+  <link rel="stylesheet" href="./index.css">
+  <script src="../../dist/mvvm.js"></script>
+</head>
+<body>
+<div id="app">
+  <section class="todoapp">
+    <header class="header">
+      <h1>Todo</h1>
+      <input class="new-todo"
+             type="text"
+             placeholder="准备做什么?"
+             v-model="newTodo"
+             @keyup="addTodo">
+    </header>
+    <section class="main">
+      <ul class="todo-list">
+        <li class="todo"
+            v-for="todo in displayTodos">
+          <div class="view" :class="{completed: todo.completed,editing: editingTodo.id===$index}">
+            <span class="toggle" @click="completeTodo(todo)"></span>
+            <label @dblclick="editTodo(todo)">{{ todo.title }}</label>
+            <button class="destroy" @click="removeTodo(todo)"></button>
+          </div>
+          <input class="edit"
+                 :class="{editing: editingTodo.id===$index}"
+                 type="text"
+                 v-model="todo.title"
+                 @blur="completeEdit"
+                 @keyup="completeEdit">
+        </li>
+      </ul>
+    </section>
+    <footer class="footer">
+      <span class="todo-count">还有{{activeTodos.length}}个</span>
+      <ul class="filters">
+        <li><a :class="{ selected: displayType == 'all' }" @click="changeDisplayType('all')">所有</a></li>
+        <li><a :class="{ selected: displayType == 'active' }" @click="changeDisplayType('active')">活动中</a></li>
+        <li><a :class="{ selected: displayType == 'completed' }" @click="changeDisplayType('completed')">已完成</a>
+        </li>
+      </ul>
+    </footer>
+  </section>
+  <footer class="info">
+    <p>双击Todo以编辑</p>
+    <p>Written by<a href="http://iimt.me"> iimT</a></p>
+  </footer>
+</div>
+
+<script>
+
+  var vm = new mvvm({
+      el      : '#app',
+      data    : {
+        newTodo    : '',
+        todos      : [],
+        displayType: '',
+        editingTodo: {},
+      },
+      methods : {
+        addTodo          : function (e) {
+          var value = e.target.value;
+          if (e.key === 'Enter' && value) {
+            this.todos.push({
+              completed: false,
+              title    : value
+            });
+            this.newTodo = '';
+          }
+        },
+        removeTodo       : function (todo) {
+          this.todos.$remove(todo);
+        },
+        completeTodo     : function (todo) {
+          todo.completed = !todo.completed;
+        },
+        editTodo         : function (todo) {
+          this.editingTodo = {
+            id   : this.todos.indexOf(todo),
+            title: todo.title,
+          };
+        },
+        completeEdit     : function (e) {
+          if (!this.editingTodo.title) {
+            return
+          }
+          if (e.key === 'Enter' || e.key === 'Escape' || e.type === 'blur') {
+            this.editingTodo = {};
+          }
+        },
+        changeDisplayType: function (type) {
+          this.displayType = type;
+        },
+      },
+      computed: {
+        activeTodos : function () {
+          return this.todos.filter(function (item) {
+            return item.completed === false;
+          });
+        }
+        ,
+        displayTodos: function () {
+          var self = this;
+          return this.todos.filter(function (item) {
+            switch (self.displayType) {
+              case 'active':
+                return item.completed === false;
+              case 'completed':
+                return item.completed === true;
+                break;
+              default:
+                return true;
+            }
+          });
+        }
+        ,
+      }
+      ,
+    })
+    ;
+
+</script>
+</body>
+</html>
